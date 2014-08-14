@@ -211,20 +211,31 @@ namespace LitJson
                 if (p_info.Name == "Item") {
                     ParameterInfo[] parameters = p_info.GetIndexParameters ();
 
-                    if (parameters.Length != 1)
+					if (parameters.Length == 1)
+					{
+						if (parameters[0].ParameterType == typeof(string))
+							data.ElementType = p_info.PropertyType;
+
+						continue;
+					}
+
+                    if (parameters.Length > 1)
                         continue;
-
-                    if (parameters[0].ParameterType == typeof (string))
-                        data.ElementType = p_info.PropertyType;
-
-                    continue;
                 }
-
-                PropertyMetadata p_data = new PropertyMetadata ();
+				
+				PropertyMetadata p_data = new PropertyMetadata ();
                 p_data.Info = p_info;
                 p_data.Type = p_info.PropertyType;
 
-                data.Properties.Add (p_info.Name, p_data);
+				if (p_info.IsDefined(typeof(JsonPropertyName),true))
+				{
+					var att = (JsonPropertyName)p_info.GetCustomAttributes(typeof(JsonPropertyName), true)[0];
+					data.Properties.Add(att.Name, p_data);
+				}
+				else
+				{
+					data.Properties.Add(p_info.Name, p_data);
+				}
             }
 
             foreach (FieldInfo f_info in type.GetFields ()) {
@@ -233,7 +244,15 @@ namespace LitJson
                 p_data.IsField = true;
                 p_data.Type = f_info.FieldType;
 
-                data.Properties.Add (f_info.Name, p_data);
+				if (f_info.IsDefined(typeof(JsonPropertyName), true))
+				{
+					var att = (JsonPropertyName)f_info.GetCustomAttributes(typeof(JsonPropertyName), true)[0];
+					data.Properties.Add(att.Name, p_data);
+				}
+				else
+				{
+					data.Properties.Add(f_info.Name, p_data);
+				}
             }
 
             lock (object_metadata_lock) {
