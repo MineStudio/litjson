@@ -24,6 +24,7 @@ namespace LitJson
         public MemberInfo Info;
         public bool       IsField;
         public Type       Type;
+		public String     Name;
     }
 
 
